@@ -20,7 +20,8 @@ DIM="\033[38;2;140;140;140m"
 RESET="\033[0m"
 
 echo -e "\n${BOLD}${CYAN}╭──────────────────────────────────────────╮${RESET}"
-echo -e "${BOLD}${CYAN}│        Instalador de pi-messages 🎨      │${RESET}"
+echo -e "${BOLD}${CYAN}│        pi-messages by DarkKevo 🎨        │${RESET}"
+echo -e "${BOLD}${CYAN}│      ${DIM}Codeblock Styler for Pi Agent${RESET}${BOLD}${CYAN}       │${RESET}"
 echo -e "${BOLD}${CYAN}╰──────────────────────────────────────────╯${RESET}\n"
 
 # 1. Asegurar directorio de extensiones
@@ -63,7 +64,7 @@ if [[ "$(uname -s)" == "Linux" ]]; then
 fi
 
 # 4. Mensaje de éxito
-echo -e "\n${BOLD}${GREEN}🎉 ¡pi-messages instalado correctamente!${RESET}\n"
+echo -e "\n${BOLD}${GREEN}🎉 ¡pi-messages by DarkKevo instalado correctamente!${RESET}\n"
 echo -e "Para activarlo:"
 echo -e "  ${BOLD}1.${RESET} Si ya tenés una sesión de Pi abierta: ejecutá ${CYAN}/reload${RESET}"
 echo -e "  ${BOLD}2.${RESET} O iniciá una nueva sesión con ${CYAN}pi${RESET}\n"
