@@ -19,7 +19,8 @@
   "pi": {
     "extensions": [
       "./pi-messages.ts"
-    ]
+    ],
+    "image": "https://raw.githubusercontent.com/DarkKevo/pi-messages/main/assets/preview-code.png"
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*",

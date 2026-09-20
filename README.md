@@ -6,17 +6,21 @@ Extensión estética y de productividad para **Pi Coding Agent** que transforma 
 
 ## 📸 Vista Previa
 
-```text
-╭─  go:main.go ─────────────────────────────────────────────────── /cc ─╮
-  package main
+<p align="center">
+  <img src="assets/preview-code.png" alt="pi-messages Codeblock Preview" width="100%">
+</p>
 
-  import "fmt"
+### ✨ Estilo de Bloques y Diffs
 
-  func main() {
-      fmt.Println("Hola desde Pi!")
-  }
-╰────────────────────────────────────────────────────────────────────────╯
-```
+| Código con Icono y Encabezado (`Rust` / `Go`) | Diffs de Git con Bordes Redondeados |
+| :---: | :---: |
+| <img src="assets/preview-go.png" width="100%" alt="Go code preview"> | <img src="assets/preview-diff.png" width="100%" alt="Diff preview"> |
+
+### ⚡ Atajos de Teclado Interactivos
+
+| Menú de Copiado Rápido (`Alt+C` / `/cc`) | Menú de Inserción en Editor (`Alt+I` / `/ci`) |
+| :---: | :---: |
+| <img src="assets/preview-copy-selector.png" width="100%" alt="Copy selector preview"> | <img src="assets/preview-insert-selector.png" width="100%" alt="Insert selector preview"> |
 
 *(Todo el bloque cuenta con fondo tenue continuo, cabecera con icono Nerd Font del lenguaje o ruta de archivo, minileyenda `/cc`, esquinas redondeadas simétricas `╭ ╮` y `╰ ╯`, y ausencia de barras laterales en el código para copiar limpio con el mouse).*
 
