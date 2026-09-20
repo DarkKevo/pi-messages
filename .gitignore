@@ -1,0 +1,10 @@
+# Dependencies
+node_modules/
+
+# Pi local runtime settings
+.pi/
+
+# System files
+.DS_Store
+Thumbs.db
+*.log

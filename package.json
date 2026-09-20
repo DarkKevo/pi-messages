@@ -1,0 +1,28 @@
+{
+  "name": "pi-messages",
+  "version": "1.0.0",
+  "description": "Tarjetas de terminal estilizadas para bloques de código en Markdown con copiado inteligente y soft-wrap para Pi Coding Agent.",
+  "keywords": [
+    "pi-package",
+    "markdown",
+    "terminal",
+    "theme",
+    "codeblock",
+    "pi-coding-agent"
+  ],
+  "author": "DarkKevo",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DarkKevo/pi-messages.git"
+  },
+  "pi": {
+    "extensions": [
+      "./pi-messages.ts"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*"
+  }
+}
