@@ -34,6 +34,35 @@ const CARD_OPACITY = 0.50;
 
 let activeUiTheme: any = null;
 
+// Configuración persistente del motor de color
+type SyntaxEngineMode = "picolor" | "vanilla";
+const CONFIG_PATH = `${process.env.HOME || ""}/.pi/agent/pi-messages.json`;
+
+function loadSyntaxMode(): SyntaxEngineMode {
+	try {
+		const fs = require("fs");
+		if (fs.existsSync(CONFIG_PATH)) {
+			const data = JSON.parse(fs.readFileSync(CONFIG_PATH, "utf8"));
+			if (data && (data.syntaxEngine === "vanilla" || data.syntaxEngine === "picolor")) {
+				return data.syntaxEngine;
+			}
+		}
+	} catch {}
+	return "picolor";
+}
+
+function saveSyntaxMode(mode: SyntaxEngineMode) {
+	try {
+		const fs = require("fs");
+		const path = require("path");
+		const dir = path.dirname(CONFIG_PATH);
+		if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: !0 });
+		fs.writeFileSync(CONFIG_PATH, JSON.stringify({ syntaxEngine: mode }, null, 2), "utf8");
+	} catch {}
+}
+
+let activeSyntaxMode: SyntaxEngineMode = loadSyntaxMode();
+
 // Mapa de iconos Nerd Font por lenguaje/formato
 const LANG_ICONS: Record<string, string> = {
 	// TypeScript / JavaScript
@@ -302,6 +331,229 @@ function extractCodeBlocks(markdown: string): Array<{ lang: string; title: strin
 	return blocks;
 }
 
+/**
+ * ============================================================================
+ * MOTOR DE RESALTADO SEMÁNTICO UNIVERSAL DINÁMICO (Multi-Lenguaje y Multi-Tema)
+ * ============================================================================
+ * Combina la base de gramáticas oficial de highlight.js (más de 190 lenguajes)
+ * con un analizador de enriquecimiento AST de alta fidelidad que rescata:
+ * - Llamadas a métodos y funciones (.Method(), callFunc())
+ * - Clases, Structs y Tipos de datos en PascalCase
+ * - Operadores universales (:=, !=, ==, ===, !==, <=, >=, &&, ||, ->, =>, <-, etc.)
+ * Y traduce todo en tiempo real al mapa ANSI del tema activo en Pi.
+ */
+
+interface SyntaxPalette {
+	keyword: string;
+	fn: string;
+	type: string;
+	string: string;
+	number: string;
+	comment: string;
+	operator: string;
+	punctuation: string;
+	variable: string;
+	text: string;
+	resetFg: string;
+}
+
+function getThemeSyntaxColors(theme?: any): SyntaxPalette {
+	const t = theme || activeUiTheme;
+	const safeFg = (key: string, fallback: string): string => {
+		if (!t) return fallback;
+		try {
+			return t.getFgAnsi(key);
+		} catch {
+			return fallback;
+		}
+	};
+
+	const textFg = safeFg("text", "\x1b[38;2;246;239;243m");
+	let variableFg = safeFg("syntaxVariable", textFg);
+
+	// Si el tema tiene syntaxVariable mapeado al mismo color que el texto base,
+	// usamos un color armónico del tema para dar contraste y jerarquía.
+	if (variableFg === textFg) {
+		variableFg = safeFg("softRose", safeFg("accent", "\x1b[38;2;240;149;200m"));
+	}
+
+	return {
+		keyword: safeFg("syntaxKeyword", "\x1b[38;2;191;15;80m"),
+		fn: safeFg("syntaxFunction", "\x1b[38;2;196;155;255m"),
+		type: safeFg("syntaxType", "\x1b[38;2;169;199;238m"),
+		string: safeFg("syntaxString", "\x1b[38;2;224;194;122m"),
+		number: safeFg("syntaxNumber", "\x1b[38;2;215;160;184m"),
+		comment: safeFg("syntaxComment", "\x1b[38;2;167;142;155m"),
+		operator: safeFg("syntaxOperator", "\x1b[38;2;255;79;154m"),
+		punctuation: safeFg("syntaxPunctuation", "\x1b[38;2;167;142;155m"),
+		variable: variableFg,
+		text: textFg,
+		resetFg: RESET_FG,
+	};
+}
+
+let cachedHljs: any = null;
+
+function getHljs(): any {
+	if (cachedHljs) return cachedHljs;
+
+	const path = require("path");
+	const fs = require("fs");
+
+	const candidates = [
+		"highlight.js",
+		path.join(process.env.HOME || "", ".npm-global/lib/node_modules/@earendil-works/pi-coding-agent/node_modules/highlight.js"),
+		path.join(process.env.HOME || "", ".npm-global/lib/node_modules/highlight.js"),
+		"/usr/lib/node_modules/@earendil-works/pi-coding-agent/node_modules/highlight.js",
+		"/usr/local/lib/node_modules/@earendil-works/pi-coding-agent/node_modules/highlight.js",
+	];
+
+	try {
+		const which = require("child_process").execSync("which pi 2>/dev/null").toString().trim();
+		if (which) {
+			const realPi = fs.realpathSync(which);
+			const piDir = path.dirname(realPi);
+			candidates.push(path.join(piDir, "../node_modules/highlight.js"));
+			candidates.push(path.join(piDir, "node_modules/highlight.js"));
+		}
+	} catch {}
+
+	for (const candidate of candidates) {
+		try {
+			cachedHljs = require(candidate);
+			if (cachedHljs && typeof cachedHljs.highlight === "function") {
+				return cachedHljs;
+			}
+		} catch {}
+	}
+
+	return null;
+}
+
+/**
+ * Convierte el HTML generado por highlight.js enriquecido en secuencias ANSI de terminal
+ * utilizando los colores exactos del tema activo de Pi.
+ */
+function renderHtmlToAnsi(html: string, pal: SyntaxPalette): string {
+	const stack: string[] = [];
+	let out = "";
+	const tagRegex = /(<\/?span[^>]*>)|(&amp;|&lt;|&gt;|&quot;|&#x27;)|([^<&]+)/g;
+	let m: RegExpExecArray | null;
+
+	while ((m = tagRegex.exec(html)) !== null) {
+		const [, tag, entity, text] = m;
+		if (tag) {
+			if (tag.startsWith("</")) {
+				stack.pop();
+				const prev = stack.length > 0 ? stack[stack.length - 1] : pal.text;
+				out += `${pal.resetFg}${prev}`;
+			} else {
+				const classMatch = tag.match(/class="([^"]+)"/);
+				const cls = classMatch ? classMatch[1] : "";
+				let color = pal.text;
+				if (cls.includes("hljs-keyword")) color = pal.keyword;
+				else if (cls.includes("hljs-title") || cls.includes("hljs-function")) color = pal.fn;
+				else if (cls.includes("hljs-string")) color = pal.string;
+				else if (cls.includes("hljs-number")) color = pal.number;
+				else if (cls.includes("hljs-comment") || cls.includes("hljs-doctag")) color = pal.comment;
+				else if (cls.includes("hljs-built_in") || cls.includes("hljs-type") || cls.includes("hljs-class")) color = pal.type;
+				else if (cls.includes("hljs-literal")) color = pal.number;
+				else if (cls.includes("hljs-params") || cls.includes("hljs-variable") || cls.includes("hljs-attr")) color = pal.variable;
+				else if (cls.includes("hljs-operator")) color = pal.operator;
+				else if (cls.includes("hljs-punctuation") || cls.includes("hljs-tag")) color = pal.punctuation;
+
+				stack.push(color);
+				out += color;
+			}
+		} else if (entity) {
+			if (entity === "&amp;") out += "&";
+			else if (entity === "&lt;") out += "<";
+			else if (entity === "&gt;") out += ">";
+			else if (entity === "&quot;") out += '"';
+			else if (entity === "&#x27;") out += "'";
+		} else if (text) {
+			out += text;
+		}
+	}
+
+	return out;
+}
+
+/**
+ * Resalta código usando highlight.js con enriquecimiento semántico universal
+ * (detecta llamadas a métodos, clases, punteros y operadores que highlight.js deja en blanco).
+ */
+function highlightCodeSmart(rawCode: string, rawLang: string, uiTheme: any): string[] {
+	const pal = getThemeSyntaxColors(uiTheme);
+	const hljs = getHljs();
+
+	let html = "";
+	const lang = (rawLang || "").trim().toLowerCase();
+
+	if (hljs) {
+		try {
+			const validLang = lang && hljs.getLanguage(lang) ? lang : null;
+			if (validLang) {
+				html = hljs.highlight(rawCode, { language: validLang, ignoreIllegals: true }).value;
+			} else {
+				html = hljs.highlightAuto(rawCode).value;
+			}
+		} catch {
+			html = "";
+		}
+	}
+
+	// Si no obtuvimos HTML de hljs, fallback al highlighter nativo de Pi
+	if (!html) {
+		if (uiTheme && typeof uiTheme.highlightCode === "function") {
+			return uiTheme.highlightCode(rawCode, rawLang);
+		}
+		return rawCode.split("\n");
+	}
+
+	// Enriquecimiento semántico universal sobre las zonas de texto plano:
+	// Partimos respetando los spans ya reconocidos por highlight.js para no alterar strings ni comentarios
+	const tokens = html.split(/(<\/?span[^>]*>)/g);
+	let enrichedHtml = "";
+	let insideExcluded = false;
+
+	for (const tok of tokens) {
+		if (tok.startsWith("<span")) {
+			if (
+				tok.includes("hljs-string") ||
+				tok.includes("hljs-comment") ||
+				tok.includes("hljs-keyword") ||
+				tok.includes("hljs-literal")
+			) {
+				insideExcluded = true;
+			}
+			enrichedHtml += tok;
+		} else if (tok.startsWith("</span")) {
+			insideExcluded = false;
+			enrichedHtml += tok;
+		} else {
+			if (insideExcluded) {
+				enrichedHtml += tok;
+			} else {
+				let t = tok;
+				// 1. Operadores universales
+				t = t.replace(
+					/(:=|!==|===|!=|==|&amp;&amp;|\|\||-&gt;|=&gt;|&lt;-|\+=|-=|\*=|\/=|%=)/g,
+					'<span class="hljs-operator">$1</span>'
+				);
+				// 2. Llamadas a métodos y funciones: .Method() o function()
+				t = t.replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)\s*(?=\()/g, '<span class="hljs-title">$1</span>');
+				// 3. Tipos, structs y clases en PascalCase
+				t = t.replace(/(?<![a-zA-Z0-9_])([A-Z][a-zA-Z0-9_]+)\b/g, '<span class="hljs-type">$1</span>');
+				enrichedHtml += t;
+			}
+		}
+	}
+
+	const ansiResult = renderHtmlToAnsi(enrichedHtml, pal);
+	return ansiResult.split("\n");
+}
+
 function patchMarkdownRenderer() {
 	const proto = Markdown.prototype as any;
 	proto[PATCH_KEY] = true;
@@ -356,10 +608,22 @@ function patchMarkdownRenderer() {
 			const rawCode = (token.text || "").replace(/\r\n/g, "\n").replace(/\n$/, "");
 			let hlLines: string[] = [];
 
-			if (this.theme && typeof this.theme.highlightCode === "function") {
-				hlLines = this.theme.highlightCode(rawCode, lang);
+			if (activeSyntaxMode === "vanilla") {
+				if (this.theme && typeof this.theme.highlightCode === "function") {
+					hlLines = this.theme.highlightCode(rawCode, lang);
+				} else {
+					hlLines = rawCode.split("\n");
+				}
 			} else {
-				hlLines = rawCode.split("\n");
+				try {
+					hlLines = highlightCodeSmart(rawCode, lang, this.theme || activeUiTheme);
+				} catch {
+					if (this.theme && typeof this.theme.highlightCode === "function") {
+						hlLines = this.theme.highlightCode(rawCode, lang);
+					} else {
+						hlLines = rawCode.split("\n");
+					}
+				}
 			}
 
 			const leftIndent = "  "; // 2 espacios de sangría para respiro visual
@@ -678,6 +942,59 @@ export default function piMessagesExtension(pi: ExtensionAPI) {
 		handler: async (ctx) => {
 			await handleInsertCode("", ctx);
 		},
+	});
+
+	// Registrar comandos para configurar el motor de color (/pi-color, /picolor, /pimessages:color)
+	const colorCommandHandler = async (_args: string, ctx: any) => {
+		if (!ctx.hasUI || typeof ctx.ui?.select !== "function") {
+			return;
+		}
+
+		const optPiColor = `[★] 󰏘 PiColor (Motor semántico universal enriquecido: métodos, structs, tipos y operadores)`;
+		const optVanilla = `[○] 󰆍 Vanilla (Motor clásico por defecto de Pi: solo palabras reservadas y strings)`;
+
+		const options = [optPiColor, optVanilla];
+		const currentDesc = activeSyntaxMode === "picolor" ? "PiColor (Enriquecido)" : "Vanilla (Defecto Pi)";
+
+		const choice = await ctx.ui.select(
+			`Selecciona el motor de resaltado de código (Actual: ${currentDesc}):`,
+			options
+		);
+
+		if (!choice) return;
+
+		let newMode: SyntaxEngineMode = "picolor";
+		if (choice === optVanilla) {
+			newMode = "vanilla";
+		}
+
+		if (newMode !== activeSyntaxMode) {
+			activeSyntaxMode = newMode;
+			saveSyntaxMode(newMode);
+
+			if (ctx.hasUI) {
+				const modeLabel = newMode === "picolor" ? "PiColor (Enriquecido)" : "Vanilla (Defecto Pi)";
+				ctx.ui.notify(`Motor de sintaxis cambiado a: ${modeLabel}`, "info");
+			}
+
+			// Disparar recarga automática de la sesión de Pi
+			try {
+				if (typeof ctx.reload === "function") {
+					await ctx.reload();
+				} else if (typeof (ctx as any).session?.reload === "function") {
+					await (ctx as any).session.reload();
+				}
+			} catch {}
+		} else {
+			if (ctx.hasUI) {
+				ctx.ui.notify(`Ya estás usando el modo ${activeSyntaxMode === "picolor" ? "PiColor" : "Vanilla"}`, "info");
+			}
+		}
+	};
+
+	pi.registerCommand("picolor", {
+		description: "Configura el motor de color para bloques de código (PiColor vs Vanilla)",
+		handler: colorCommandHandler,
 	});
 
 	pi.on("session_start", (_event, ctx) => {

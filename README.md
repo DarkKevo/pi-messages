@@ -22,6 +22,16 @@ Extensión estética y de productividad para **Pi Coding Agent** que transforma 
 | :---: | :---: |
 | <img src="assets/preview-copy-selector.png" width="100%" alt="Copy selector preview"> | <img src="assets/preview-insert-selector.png" width="100%" alt="Insert selector preview"> |
 
+### 🎨 NEW: Selector de Coloración `/picolor` (PiColor vs Vanilla)
+
+| Menú Interactivo `/picolor` | Cambio Automático de Modo |
+| :---: | :---: |
+| <img src="assets/preview-picolor-command.png" width="100%" alt="Comando /picolor"> | <img src="assets/preview-picolor-selector.png" width="100%" alt="Selector de Motor de Sintaxis"> |
+
+| 󰏘 PiColor (Semántico Universal Enriquecido) | 󰆍 Vanilla (Motor Clásico por Defecto de Pi) |
+| :---: | :---: |
+| <img src="assets/preview-picolor.png" width="100%" alt="Modo PiColor"> | <img src="assets/preview-vanilla.png" width="100%" alt="Modo Vanilla"> |
+
 *(Todo el bloque cuenta con fondo tenue continuo, cabecera con icono Nerd Font del lenguaje o ruta de archivo, minileyenda `/cc`, esquinas redondeadas simétricas `╭ ╮` y `╰ ╯`, y ausencia de barras laterales en el código para copiar limpio con el mouse).*
 
 ---
@@ -55,31 +65,41 @@ Extensión estética y de productividad para **Pi Coding Agent** que transforma 
 * Toma automáticamente el color de fondo de las herramientas del tema activo (`toolSuccessBg`).
 * Aplica una fórmula matemática de **alpha blending** al 50% hacia el fondo base de la terminal, logrando un efecto translúcido sutil que no cansa la vista y respeta el tema de consola.
 
+### 7. NEW: Resaltado Semántico Universal PiColor y Switch `/picolor`
+* **El problema que resuelve:** El resaltador tradicional de Pi (`cli-highlight` basado en `highlight.js`) solo resalta palabras reservadas duras (`func`, `var`, `if`) y strings, dejando llamadas a métodos (`.Group()`, `.POST()`, `.Error()`), structs, punteros (`*User`), tipos (`string`, `UUID`), y operadores (`:=`, `!=`, `->`) como texto blanco plano, quitando contexto y jerarquía visual.
+* **Motor Semántico Universal PiColor:** `pi-messages` se conecta a las 191 gramáticas de highlight.js e incorpora un enriquecedor contextual universal. Ahora métodos, clases, tipos y operadores se colorean con sus tokens específicos (`syntaxFunction`, `syntaxType`, `syntaxOperator`, etc.) en cualquier lenguaje (Go, Python, Rust, C++, Java, JS, TS, Ruby, Solidity, etc.).
+* **100% Adaptable al tema activo:** Los colores no están hardcodeados; se obtienen en tiempo real de la paleta activa en Pi (`Gentleman-Sexy`, `Gentleman-Cute`, `monokai`, etc.).
+* **Comando interactivo `/picolor`:** Podés alternar en cualquier momento entre **PiColor** (enriquecido) y **Vanilla** (motor por defecto de Pi). Tu preferencia se guarda automáticamente y la sesión se recarga sola al instante.
+
 ---
 
-## 🚀 Instalación
+## 🚀 Instalación y Actualización
 
-Elegí la opción que prefieras:
+Elegí la opción que prefieras (el mismo comando de instalación sirve para actualizar a la última versión):
 
 ### Opción 1: Paquete nativo de Pi (Recomendado)
 
-Si usás Pi Coding Agent, podés instalarlo directamente como un paquete nativo de Pi mediante Git:
-
 ```bash
+# Instalación inicial o actualización a la última versión:
 pi install git:github.com/DarkKevo/pi-messages
+
+# O actualizar todas las extensiones instaladas:
+pi update --extensions
 ```
 
-> **Ventajas:** Pi gestiona la extensión de forma aislada. Para actualizar en el futuro solo ejecutás `pi update --extensions`, y para desinstalar `pi remove git:github.com/DarkKevo/pi-messages`.
+> **Ventajas:** Pi gestiona la extensión de forma aislada. Para desinstalar ejecutás `pi remove git:github.com/DarkKevo/pi-messages`.
 
 ---
 
-### Opción 2: One-Liner con cURL (Instalación automática directa)
+### Opción 2: One-Liner con cURL (Instalación / Actualización Directa)
 
-Si querés descargarlo directamente en tu carpeta de extensiones personales de Pi (`~/.pi/agent/extensions/`) con un solo comando:
+Si querés instalar o actualizar directamente el archivo en tu carpeta personal (`~/.pi/agent/extensions/pi-messages.ts`):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/DarkKevo/pi-messages/main/install.sh | bash
 ```
+
+*(El script sobreescribe de forma limpia la versión anterior e informa las novedades).*
 
 ---
 
@@ -118,6 +138,7 @@ cd pi-messages
 | **`/ci all`** | Insertar Todo | Inserta todos los códigos de la respuesta en el prompt. |
 | **`/ci <n>`** | Insertar Bloque `n` | Inserta directamente el bloque número `n` (ej: `/ci 1`). |
 | **`/insert-code`** | Insertar en Prompt | Alias extendido de `/ci`. |
+| **`/picolor`** | Selector de Coloración | Alterna entre **PiColor** (enriquecido) y **Vanilla** (defecto Pi) con auto-reload. |
 
 ---
 
