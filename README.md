@@ -10,29 +10,46 @@ Extensión estética y de productividad para **Pi Coding Agent** que transforma 
   <img src="assets/preview-code.png" alt="pi-messages Codeblock Preview" width="100%">
 </p>
 
-### ✨ Estilo de Bloques y Diffs
+## 📸 Vista Previa
 
-| Código con Icono y Encabezado (`Rust` / `Go`) | Diffs de Git con Bordes Redondeados |
+<p align="center">
+  <img src="assets/preview-code.png" alt="pi-messages Codeblock Preview" width="100%">
+</p>
+
+### 🎨 NEW: Selector de Coloración `/picolor` (PiColor vs Vanilla)
+
+| 󰏘 PiColor (Semántico Universal Enriquecido) | 󰆍 Vanilla (Motor Clásico por Defecto de Pi) |
 | :---: | :---: |
-| <img src="assets/preview-go.png" width="100%" alt="Go code preview"> | <img src="assets/preview-diff.png" width="100%" alt="Diff preview"> |
+| <img src="assets/preview-picolor.png" width="100%" alt="Modo PiColor: Resaltado Enriquecido"> | <img src="assets/preview-vanilla.png" width="100%" alt="Modo Vanilla: Por Defecto"> |
 
-### ⚡ Atajos de Teclado Interactivos
+| Menú Interactivo `/picolor` | Auto-Reload Instantáneo |
+| :---: | :---: |
+| <img src="assets/preview-picolor-command.png" width="100%" alt="Comando /picolor"> | <img src="assets/preview-picolor-selector.png" width="100%" alt="Selector de Motor de Sintaxis"> |
+
+### ⚡ Productividad y Estilo
 
 | Menú de Copiado Rápido (`Alt+C` / `/cc`) | Menú de Inserción en Editor (`Alt+I` / `/ci`) |
 | :---: | :---: |
 | <img src="assets/preview-copy-selector.png" width="100%" alt="Copy selector preview"> | <img src="assets/preview-insert-selector.png" width="100%" alt="Insert selector preview"> |
 
-### 🎨 NEW: Selector de Coloración `/picolor` (PiColor vs Vanilla)
-
-| Menú Interactivo `/picolor` | Cambio Automático de Modo |
+| Código con Icono y Encabezado (`Rust` / `Go`) | Diffs de Git con Bordes Redondeados |
 | :---: | :---: |
-| <img src="assets/preview-picolor-command.png" width="100%" alt="Comando /picolor"> | <img src="assets/preview-picolor-selector.png" width="100%" alt="Selector de Motor de Sintaxis"> |
-
-| 󰏘 PiColor (Semántico Universal Enriquecido) | 󰆍 Vanilla (Motor Clásico por Defecto de Pi) |
-| :---: | :---: |
-| <img src="assets/preview-picolor.png" width="100%" alt="Modo PiColor"> | <img src="assets/preview-vanilla.png" width="100%" alt="Modo Vanilla"> |
+| <img src="assets/preview-go.png" width="100%" alt="Go code preview"> | <img src="assets/preview-diff.png" width="100%" alt="Diff preview"> |
 
 *(Todo el bloque cuenta con fondo tenue continuo, cabecera con icono Nerd Font del lenguaje o ruta de archivo, minileyenda `/cc`, esquinas redondeadas simétricas `╭ ╮` y `╰ ╯`, y ausencia de barras laterales en el código para copiar limpio con el mouse).*
+
+---
+
+## 🚀 Mejoras y Novedades (NEW)
+
+### 󰏘 Resaltado Semántico Universal PiColor
+* **El problema que resuelve:** El resaltador tradicional de Pi (`cli-highlight` basado en `highlight.js`) solo resalta palabras reservadas duras (`func`, `var`, `if`) y strings, dejando llamadas a métodos (`.Group()`, `.POST()`, `.Error()`), structs, punteros (`*User`), tipos (`string`, `UUID`), y operadores (`:=`, `!=`, `->`) como texto blanco plano, quitando contexto y jerarquía visual.
+* **Motor Semántico Universal:** `pi-messages` se conecta a las 191 gramáticas de highlight.js e incorpora un enriquecedor contextual universal. Ahora métodos, clases, tipos y operadores se colorean con sus tokens específicos (`syntaxFunction`, `syntaxType`, `syntaxOperator`, etc.) en cualquier lenguaje (**Go, Python, Rust, C++, Java, JS, TS, Ruby, Solidity, etc.**).
+* **100% Adaptable al tema activo:** Los colores no están hardcodeados; se obtienen en tiempo real de la paleta activa en Pi (`Gentleman-Sexy`, `Gentleman-Cute`, `monokai`, etc.).
+
+### 󰆍 Switch Interactivo con `/picolor`
+* **Control total para el usuario:** Podés alternar en cualquier momento entre **PiColor** (enriquecido) y **Vanilla** (motor por defecto de Pi).
+* **Auto-Reload:** Tu preferencia se guarda automáticamente en `~/.pi/agent/pi-messages.json` y la sesión se recarga sola al instante sin comandos adicionales.
 
 ---
 
@@ -64,12 +81,6 @@ Extensión estética y de productividad para **Pi Coding Agent** que transforma 
 ### 6. Fondo con Alpha Blending
 * Toma automáticamente el color de fondo de las herramientas del tema activo (`toolSuccessBg`).
 * Aplica una fórmula matemática de **alpha blending** al 50% hacia el fondo base de la terminal, logrando un efecto translúcido sutil que no cansa la vista y respeta el tema de consola.
-
-### 7. NEW: Resaltado Semántico Universal PiColor y Switch `/picolor`
-* **El problema que resuelve:** El resaltador tradicional de Pi (`cli-highlight` basado en `highlight.js`) solo resalta palabras reservadas duras (`func`, `var`, `if`) y strings, dejando llamadas a métodos (`.Group()`, `.POST()`, `.Error()`), structs, punteros (`*User`), tipos (`string`, `UUID`), y operadores (`:=`, `!=`, `->`) como texto blanco plano, quitando contexto y jerarquía visual.
-* **Motor Semántico Universal PiColor:** `pi-messages` se conecta a las 191 gramáticas de highlight.js e incorpora un enriquecedor contextual universal. Ahora métodos, clases, tipos y operadores se colorean con sus tokens específicos (`syntaxFunction`, `syntaxType`, `syntaxOperator`, etc.) en cualquier lenguaje (Go, Python, Rust, C++, Java, JS, TS, Ruby, Solidity, etc.).
-* **100% Adaptable al tema activo:** Los colores no están hardcodeados; se obtienen en tiempo real de la paleta activa en Pi (`Gentleman-Sexy`, `Gentleman-Cute`, `monokai`, etc.).
-* **Comando interactivo `/picolor`:** Podés alternar en cualquier momento entre **PiColor** (enriquecido) y **Vanilla** (motor por defecto de Pi). Tu preferencia se guarda automáticamente y la sesión se recarga sola al instante.
 
 ---
 
