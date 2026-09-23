@@ -181,13 +181,17 @@ const LANG_ICONS: Record<string, string> = {
 	nim: "",
 	v: "",
 
-	// Texto plano y logs
-	text: "󰌠",
-	txt: "󰌠",
-	plain: "󰌠",
-	plaintext: "󰌠",
-	log: "󰌠",
-	logs: "󰌠",
+	// Texto plano, documentación y logs
+	text: "󰈙",
+	txt: "󰈙",
+	plain: "󰈙",
+	plaintext: "󰈙",
+	log: "󰈙",
+	logs: "󰈙",
+	md: "",
+	markdown: "",
+	mdown: "",
+	mkdn: "",
 };
 
 // Lista de formatos admitidos para tarjetas
@@ -453,14 +457,17 @@ function renderHtmlToAnsi(html: string, pal: SyntaxPalette): string {
 				let color = pal.text;
 				if (cls.includes("hljs-keyword")) color = pal.keyword;
 				else if (cls.includes("hljs-title") || cls.includes("hljs-function")) color = pal.fn;
+				else if (cls.includes("hljs-section")) color = pal.keyword;
 				else if (cls.includes("hljs-string")) color = pal.string;
 				else if (cls.includes("hljs-number")) color = pal.number;
 				else if (cls.includes("hljs-comment") || cls.includes("hljs-doctag")) color = pal.comment;
 				else if (cls.includes("hljs-built_in") || cls.includes("hljs-type") || cls.includes("hljs-class")) color = pal.type;
 				else if (cls.includes("hljs-literal")) color = pal.number;
 				else if (cls.includes("hljs-params") || cls.includes("hljs-variable") || cls.includes("hljs-attr")) color = pal.variable;
-				else if (cls.includes("hljs-operator")) color = pal.operator;
+				else if (cls.includes("hljs-operator") || cls.includes("hljs-bullet")) color = pal.operator;
 				else if (cls.includes("hljs-punctuation") || cls.includes("hljs-tag")) color = pal.punctuation;
+				else if (cls.includes("hljs-quote")) color = pal.comment;
+				else if (cls.includes("hljs-link") || cls.includes("hljs-code")) color = pal.string;
 
 				stack.push(color);
 				out += color;
@@ -484,11 +491,18 @@ function renderHtmlToAnsi(html: string, pal: SyntaxPalette): string {
  * (detecta llamadas a métodos, clases, punteros y operadores que highlight.js deja en blanco).
  */
 function highlightCodeSmart(rawCode: string, rawLang: string, uiTheme: any): string[] {
+	const lang = (rawLang || "").trim().toLowerCase();
+
+	// Texto plano y logs: renderizar en texto plano puro sin coloreado sintáctico
+	const plainLangs = new Set(["text", "txt", "plain", "plaintext", "log", "logs"]);
+	if (plainLangs.has(lang)) {
+		return rawCode.split("\n");
+	}
+
 	const pal = getThemeSyntaxColors(uiTheme);
 	const hljs = getHljs();
 
 	let html = "";
-	const lang = (rawLang || "").trim().toLowerCase();
 
 	if (hljs) {
 		try {
@@ -511,6 +525,10 @@ function highlightCodeSmart(rawCode: string, rawLang: string, uiTheme: any): str
 		return rawCode.split("\n");
 	}
 
+	// Para Markdown, no aplicar heurísticas de código (PascalCase o llamadas a funciones)
+	// ya que Markdown es prosa y convertiría palabras comunes en mayúscula en "tipos"
+	const isMarkdown = lang === "md" || lang === "markdown" || lang === "mdown" || lang === "mkdn";
+
 	// Enriquecimiento semántico universal sobre las zonas de texto plano:
 	// Partimos respetando los spans ya reconocidos por highlight.js para no alterar strings ni comentarios
 	const tokens = html.split(/(<\/?span[^>]*>)/g);
@@ -523,7 +541,10 @@ function highlightCodeSmart(rawCode: string, rawLang: string, uiTheme: any): str
 				tok.includes("hljs-string") ||
 				tok.includes("hljs-comment") ||
 				tok.includes("hljs-keyword") ||
-				tok.includes("hljs-literal")
+				tok.includes("hljs-literal") ||
+				tok.includes("hljs-section") ||
+				tok.includes("hljs-quote") ||
+				tok.includes("hljs-code")
 			) {
 				insideExcluded = true;
 			}
@@ -532,7 +553,7 @@ function highlightCodeSmart(rawCode: string, rawLang: string, uiTheme: any): str
 			insideExcluded = false;
 			enrichedHtml += tok;
 		} else {
-			if (insideExcluded) {
+			if (insideExcluded || isMarkdown) {
 				enrichedHtml += tok;
 			} else {
 				let t = tok;

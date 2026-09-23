@@ -57,8 +57,9 @@ Extensión estética y de productividad para **Pi Coding Agent** que transforma 
 * Si una línea excede el ancho de tu terminal, **no se trunca con `…`**.
 * Utiliza `wrapTextWithAnsi` nativo para dividir la línea respetando la sangría, el color de fondo y el resaltado de sintaxis. El código siempre se mantiene 100% íntegro.
 
-### 3. Iconos Nerd Font Automáticos
-* Detecta más de 40 lenguajes y asigna su glifo icónico (` ts`, ` go`, ` rust`, ` py`, ` bash`, ` diff`, `󰡨 docker`, `󰘦 json`, etc.).
+### 3. Iconos Nerd Font y Formatos Automáticos
+* Detecta más de 40 lenguajes y formatos, asignando su glifo icónico (` ts`, ` go`, ` rust`, ` py`, ` bash`, ` diff`, `󰡨 docker`, `󰘦 json`, ` md`, `󰈙 text`, etc.).
+* Soporta formalmente bloques de **Markdown** (`md`, `markdown` con icono ``) y bloques de **Texto plano** (`text`, `plain`, `log` con icono `󰈙`), asegurando que el texto sin código se renderice limpio, sin falsos positivos de sintaxis.
 * Si el bloque contiene una ruta (ej: ````typescript:src/auth.ts````), la cabecera muestra el icono y el nombre del archivo.
 
 ### 4. Copiado Keyboard-Driven (`Alt+C` y `/cc`)
