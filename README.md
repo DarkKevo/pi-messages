@@ -10,12 +10,6 @@ Extensión estética y de productividad para **Pi Coding Agent** que transforma 
   <img src="assets/preview-code.png" alt="pi-messages Codeblock Preview" width="100%">
 </p>
 
-## 📸 Vista Previa
-
-<p align="center">
-  <img src="assets/preview-code.png" alt="pi-messages Codeblock Preview" width="100%">
-</p>
-
 ### 🎨 NEW: Selector de Coloración `/picolor` (PiColor vs Vanilla)
 
 | 󰏘 PiColor (Semántico Universal Enriquecido) | 󰆍 Vanilla (Motor Clásico por Defecto de Pi) |
